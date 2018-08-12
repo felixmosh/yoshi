@@ -66,10 +66,11 @@ module.exports = function(wallaby) {
       { pattern: 'src/**/*.+(spec|it).[j|t]sx' },
     ],
     compilers: {
-      '**/*.js{,x}': wallaby.compilers.babel({
+      '**/*.js{,x,on}': wallaby.compilers.babel({
         babelrc: true,
         plugins: [
           require.resolve('babel-plugin-transform-es2015-modules-commonjs'),
+          require.resolve('babel-plugin-inline-json-import'),
         ],
       }),
     },
