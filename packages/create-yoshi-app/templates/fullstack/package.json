@@ -37,13 +37,14 @@
     "chai": "~4.1.0",
     "enzyme": "~2.9.0",
     "husky": "~0.14.0",
-    "jsdom": "~11.2.0",
-    "jsdom-global": "~3.0.0",
     "puppeteer": "^1.1.0",
     "wix-bootstrap-testkit": "latest",
     "wix-config-emitter": "latest",
     "yoshi": "^3.0.0",
     "yoshi-style-dependencies": "^3.0.0"
+  },
+  "jest": {
+    "preset": "jest-yoshi-preset"
   },
   "yoshi": {
     "externals": {

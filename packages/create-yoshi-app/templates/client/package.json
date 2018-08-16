@@ -21,8 +21,6 @@
     "express": "~4.15.0",
     "express-session": "~1.15.0",
     "husky": "~0.14.0",
-    "jsdom": "~11.2.0",
-    "jsdom-global": "~3.0.0",
     "puppeteer": "^1.1.0",
     "react-test-renderer": "~15.6.0",
     "velocity": "~0.7.0",
@@ -46,6 +44,9 @@
       "react-dom": "ReactDOM"
     },
     "hmr": "auto"
+  },
+  "jest": {
+    "preset": "jest-yoshi-preset"
   },
   "babel": {
     "presets": [

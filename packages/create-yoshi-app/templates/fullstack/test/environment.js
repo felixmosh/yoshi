@@ -1,33 +1,29 @@
-import testkit from 'wix-bootstrap-testkit';
-import configEmitter from 'wix-config-emitter';
+const testkit = require('wix-bootstrap-testkit');
+const configEmitter = require('wix-config-emitter');
 
-export const app = bootstrapServer();
-
-export function beforeAndAfter() {
-  before(() => emitConfigs());
-  app.beforeAndAfter();
-}
-
-function emitConfigs() {
-  return configEmitter({
+module.exports.emitConfigs = ({ targetFolder, staticsUrl }) => {
+  const emitter = configEmitter({
     sourceFolders: ['./templates'],
-    targetFolder: './target/configs',
+    targetFolder,
   })
+
+  return emitter
     .fn('scripts_domain', 'static.parastorage.com')
     .fn(
       'static_url',
       'com.wixpress.{%projectName%}',
-      'http://localhost:3200/',
+      staticsUrl,
     )
     .emit();
 }
 
-function bootstrapServer() {
+module.exports.bootstrapServer = ({ port, managementPort, appConfDir }) => {
   return testkit.app('./index', {
     env: {
-      PORT: 3100,
-      MANAGEMENT_PORT: 3104,
+      PORT: port,
+      MANAGEMENT_PORT: managementPort,
       NEW_RELIC_LOG_LEVEL: 'warn',
+      APP_CONF_DIR: appConfDir,
       DEBUG: '',
     },
   });
