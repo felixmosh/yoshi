@@ -9,19 +9,30 @@ module.exports = class BootstrapEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    await config.bootstrap.setup({
-      globalObject: this.global,
-      getPort,
-      staticsUrl: project.servers.cdn.url(),
-      appConfDir,
-    });
+    // errors from ennvironment setup/teardown are catched silently
+    try {
+      await config.bootstrap.setup({
+        globalObject: this.global,
+        getPort,
+        staticsUrl: project.servers.cdn.url(),
+        appConfDir,
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 
   async teardown() {
     await super.teardown();
 
-    await config.bootstrap.teardown({
-      globalObject: this.global,
-    });
+    try {
+      await config.bootstrap.teardown({
+        globalObject: this.global,
+      });
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
   }
 };
