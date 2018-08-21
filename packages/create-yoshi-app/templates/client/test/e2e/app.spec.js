@@ -3,6 +3,6 @@ describe('React application', () => {
     await global.page.goto('http://localhost:3100');
     await global.page.waitForSelector('h2');
 
-    expect(await global.page.$eval('h2', e => e.innerText)).toMatchSnapshot();
+    expect(await global.page.$eval('h2', e => e.innerText)).toEqual('Hello World!');
   });
 });

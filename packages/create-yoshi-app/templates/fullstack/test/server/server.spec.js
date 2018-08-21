@@ -5,6 +5,6 @@ describe('When rendering', () => {
     const url = global.app.getUrl('/');
     const response = await axios.get(url);
 
-    expect(response.data).toMatchSnapshot();
+    expect(response.data).toContain('Wix Full Stack Project Boilerplate');
   });
 });
