@@ -3,13 +3,15 @@ const project = require('yoshi/config/project');
 const { getPort, appConfDir } = require('./constants');
 const { loadConfig } = require('yoshi/src/utils');
 
+require('yoshi/src/require-hooks');
+
 const config = loadConfig();
 
 module.exports = class BootstrapEnvironment extends NodeEnvironment {
   async setup() {
     await super.setup();
 
-    // errors from ennvironment setup/teardown are catched silently
+    // errors from environment setup/teardown are catched silently
     try {
       await config.bootstrap.setup({
         globalObject: this.global,
