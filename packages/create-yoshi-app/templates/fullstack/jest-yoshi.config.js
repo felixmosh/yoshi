@@ -18,5 +18,5 @@ module.exports = {
     teardown: async ({ globalObject }) => {
       await globalObject.app.stop();
     },
-  }
+  },
 };

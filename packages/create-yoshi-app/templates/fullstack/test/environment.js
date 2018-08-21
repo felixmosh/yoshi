@@ -5,17 +5,13 @@ module.exports.emitConfigs = ({ targetFolder, staticsUrl }) => {
   const emitter = configEmitter({
     sourceFolders: ['./templates'],
     targetFolder,
-  })
+  });
 
   return emitter
     .fn('scripts_domain', 'static.parastorage.com')
-    .fn(
-      'static_url',
-      'com.wixpress.{%projectName%}',
-      staticsUrl,
-    )
+    .fn('static_url', 'com.wixpress.{%projectName%}', staticsUrl)
     .emit();
-}
+};
 
 module.exports.bootstrapServer = ({ port, managementPort, appConfDir }) => {
   return testkit.app('./index', {
@@ -27,4 +23,4 @@ module.exports.bootstrapServer = ({ port, managementPort, appConfDir }) => {
       DEBUG: '',
     },
   });
-}
+};
