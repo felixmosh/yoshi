@@ -2647,17 +2647,15 @@ bootstrap()
 ",
   "jest-yoshi.config.js": "const { emitConfigs, bootstrapServer } = require('./test/environment');
 
-const APP_CONF_DIR = \`./target/configs-\${process.env.JEST_WORKER_ID}\`;
-
 module.exports = {
   bootstrap: {
-    setup: async ({ globalObject, getPort, staticsUrl }) => {
-      await emitConfigs({ staticsUrl, targetFolder: APP_CONF_DIR });
+    setup: async ({ globalObject, getPort, staticsUrl, appConfDir }) => {
+      await emitConfigs({ staticsUrl, targetFolder: appConfDir });
 
       globalObject.app = bootstrapServer({
         port: getPort(),
         managementPort: getPort(),
-        appConfDir: APP_CONF_DIR,
+        appConfDir,
       });
 
       await globalObject.app.start();
