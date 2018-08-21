@@ -1145,9 +1145,14 @@ package-lock.json
   "README.md": "# test-client
 ",
   "index.js": "require('babel-register');
-const { start } = require('./test/dev/server');
-
-start();
+require('./test/dev/server').default();
+",
+  "jest-yoshi.config.js": "module.exports = {
+  server: {
+    command: 'node index.js',
+    port: 3100,
+  },
+};
 ",
   "package.json": "{
   \\"name\\": \\"test-client\\",
@@ -1162,18 +1167,16 @@ start();
     \\"start\\": \\"yoshi start\\",
     \\"precommit\\": \\"yoshi lint\\",
     \\"pretest\\": \\"yoshi build\\",
-    \\"test\\": \\"yoshi test\\",
+    \\"test\\": \\"yoshi test --jest\\",
     \\"posttest\\": \\"yoshi lint\\",
     \\"release\\": \\"yoshi release\\"
   },
   \\"devDependencies\\": {
-    \\"chai\\": \\"~4.1.0\\",
     \\"enzyme\\": \\"~2.9.0\\",
     \\"express\\": \\"~4.15.0\\",
     \\"express-session\\": \\"~1.15.0\\",
     \\"husky\\": \\"~0.14.0\\",
-    \\"jsdom\\": \\"~11.2.0\\",
-    \\"jsdom-global\\": \\"~3.0.0\\",
+    \\"jest-yoshi-preset\\": \\"^3.5.0\\",
     \\"puppeteer\\": \\"^1.1.0\\",
     \\"react-test-renderer\\": \\"~15.6.0\\",
     \\"velocity\\": \\"~0.7.0\\",
@@ -1197,6 +1200,9 @@ start();
       \\"react-dom\\": \\"ReactDOM\\"
     },
     \\"hmr\\": \\"auto\\"
+  },
+  \\"jest\\": {
+    \\"preset\\": \\"jest-yoshi-preset\\"
   },
   \\"babel\\": {
     \\"presets\\": [
@@ -1337,9 +1343,7 @@ export default translate(null, { wait: true })(App);
   font-size: 15pt;
 }
 ",
-  "src/components/App/App.spec.js": "import 'jsdom-global/register';
-import React from 'react';
-import { expect } from 'chai';
+  "src/components/App/App.spec.js": "import React from 'react';
 import { mount } from 'enzyme';
 import i18next from 'i18next';
 import { I18nextProvider } from 'react-i18next';
@@ -1366,7 +1370,7 @@ describe('App', () => {
       </I18nextProvider>,
       { attachTo: document.createElement('div') },
     );
-    expect(wrapper.find('h2').length).to.eq(1);
+    expect(wrapper.find('h2').length).toEqual(1);
   });
 });
 ",
@@ -1417,7 +1421,7 @@ export default function i18n({ locale, baseUrl = '' }) {
 import session from 'express-session';
 import { renderVM } from './vm';
 
-export function start(port = process.env.PORT || 3000) {
+export default function start() {
   const app = express();
 
   app.use(
@@ -1442,8 +1446,8 @@ export function start(port = process.env.PORT || 3000) {
     );
   });
 
-  return app.listen(port, () => {
-    console.info(\`Fake server is running on port \${port}\`);
+  return app.listen(process.env.PORT, () => {
+    console.info(\`Fake server is running on port \${process.env.PORT}\`);
   });
 }
 ",
@@ -1468,43 +1472,14 @@ export function renderVM(template, data) {
   );
 }
 ",
-  "test/e2e/app.e2e.js": "import { expect } from 'chai';
-import { baseURL } from './e2e-common';
+  "test/e2e/app.spec.js": "describe('React application', () => {
+  it('should display title', async () => {
+    await global.page.goto('http://localhost:3100');
+    await global.page.waitForSelector('h2');
 
-describe('React application', () => {
-  describe('open page', () => {
-    it('should display title', async () => {
-      const page = await browser.newPage();
-      await page.goto(baseURL);
-      await page.waitForSelector('h2', { timeout: 1000 });
-      expect(await page.$eval('h2', e => e.innerText)).to.equal('Hello World!');
-    });
+    expect(await global.page.$eval('h2', e => e.innerText)).toEqual('Hello World!');
   });
 });
-",
-  "test/e2e/e2e-common.js": "import puppeteer from 'puppeteer';
-import { start } from '../dev/server';
-
-before(async () => {
-  await start(3100);
-  global.browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-});
-
-after(async () => {
-  await global.browser.close();
-});
-
-export const baseURL = \`http://localhost:3100\`;
-",
-  "test/mocha-setup.js": "import axios from 'axios';
-import { wixAxiosConfig } from 'wix-axios-config';
-import { baseURL } from './test-common';
-
-wixAxiosConfig(axios, { baseURL });
-",
-  "test/test-common.js": "export const baseURL = \`http://localhost:5554\`;
 ",
   "velocity.data.json": "{
   \\"title\\": \\"Wix Stack React Example Application\\",
@@ -2670,6 +2645,29 @@ bootstrap()
   .express(getPath('server'))
   .start({ disableCluster: process.env.NODE_ENV === 'development' });
 ",
+  "jest-yoshi.config.js": "const { emitConfigs, bootstrapServer } = require('./test/environment');
+
+const APP_CONF_DIR = \`./target/configs-\${process.env.JEST_WORKER_ID}\`;
+
+module.exports = {
+  bootstrap: {
+    setup: async ({ globalObject, getPort, staticsUrl }) => {
+      await emitConfigs({ staticsUrl, targetFolder: APP_CONF_DIR });
+
+      globalObject.app = bootstrapServer({
+        port: getPort(),
+        managementPort: getPort(),
+        appConfDir: APP_CONF_DIR,
+      });
+
+      await globalObject.app.start();
+    },
+    teardown: async ({ globalObject }) => {
+      await globalObject.app.stop();
+    },
+  },
+};
+",
   "package.json": "{
   \\"name\\": \\"test-fullstack\\",
   \\"version\\": \\"1.0.0\\",
@@ -2683,7 +2681,7 @@ bootstrap()
     \\"start\\": \\"yoshi start\\",
     \\"precommit\\": \\"yoshi lint\\",
     \\"pretest\\": \\"yoshi build\\",
-    \\"test\\": \\"yoshi test\\",
+    \\"test\\": \\"yoshi test --jest\\",
     \\"posttest\\": \\"yoshi lint\\",
     \\"release\\": \\"yoshi release\\"
   },
@@ -2706,16 +2704,17 @@ bootstrap()
   },
   \\"devDependencies\\": {
     \\"react-test-renderer\\": \\"~15.6.0\\",
-    \\"chai\\": \\"~4.1.0\\",
     \\"enzyme\\": \\"~2.9.0\\",
     \\"husky\\": \\"~0.14.0\\",
-    \\"jsdom\\": \\"~11.2.0\\",
-    \\"jsdom-global\\": \\"~3.0.0\\",
+    \\"jest-yoshi-preset\\": \\"^3.5.0\\",
     \\"puppeteer\\": \\"^1.1.0\\",
     \\"wix-bootstrap-testkit\\": \\"latest\\",
     \\"wix-config-emitter\\": \\"latest\\",
     \\"yoshi\\": \\"^3.0.0\\",
     \\"yoshi-style-dependencies\\": \\"^3.0.0\\"
+  },
+  \\"jest\\": {
+    \\"preset\\": \\"jest-yoshi-preset\\"
   },
   \\"yoshi\\": {
     \\"externals\\": {
@@ -2862,9 +2861,7 @@ export default translate(null, { wait: true })(App);
   font-size: 15pt;
 }
 ",
-  "src/components/App/App.spec.js": "import 'jsdom-global/register';
-import React from 'react';
-import { expect } from 'chai';
+  "src/components/App/App.spec.js": "import React from 'react';
 import { mount } from 'enzyme';
 import i18next from 'i18next';
 import { I18nextProvider } from 'react-i18next';
@@ -2891,7 +2888,7 @@ describe('App', () => {
       </I18nextProvider>,
       { attachTo: document.createElement('div') },
     );
-    expect(wrapper.find('h2').length).to.eq(1);
+    expect(wrapper.find('h2').length).toEqual(1);
   });
 });
 ",
@@ -2992,97 +2989,52 @@ module.exports = (app, context) => {
   \\"petriScopes\\": []
 }
 ",
-  "test/e2e/app.e2e.js": "import { expect } from 'chai';
-import { beforeAndAfter, app } from '../environment';
-import './e2e-common';
+  "test/e2e/app.spec.js": "describe('React application', () => {
+  it('should display title', async () => {
+    await global.page.goto(global.app.getUrl('/'));
+    await global.page.waitForSelector('h2', { timeout: 1000 });
 
-describe('React application', () => {
-  beforeAndAfter();
-
-  describe('open page', () => {
-    it('should display title', async () => {
-      const page = await browser.newPage();
-      await page.goto(app.getUrl('/'));
-      await page.waitForSelector('h2', { timeout: 1000 });
-      expect(await page.$eval('h2', e => e.innerText)).to.equal('Hello World!');
-    });
+    expect(await global.page.$eval('h2', e => e.innerText)).toEqual('Hello World!');
   });
 });
 ",
-  "test/e2e/e2e-common.js": "import puppeteer from 'puppeteer';
+  "test/environment.js": "const testkit = require('wix-bootstrap-testkit');
+const configEmitter = require('wix-config-emitter');
 
-before(async () => {
-  global.browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-});
-
-after(async () => {
-  await global.browser.close();
-});
-",
-  "test/environment.js": "import testkit from 'wix-bootstrap-testkit';
-import configEmitter from 'wix-config-emitter';
-
-export const app = bootstrapServer();
-
-export function beforeAndAfter() {
-  before(() => emitConfigs());
-  app.beforeAndAfter();
-}
-
-function emitConfigs() {
-  return configEmitter({
+module.exports.emitConfigs = ({ targetFolder, staticsUrl }) => {
+  const emitter = configEmitter({
     sourceFolders: ['./templates'],
-    targetFolder: './target/configs',
-  })
-    .fn('scripts_domain', 'static.parastorage.com')
-    .fn(
-      'static_url',
-      'com.wixpress.test-fullstack',
-      'http://localhost:3200/',
-    )
-    .emit();
-}
+    targetFolder,
+  });
 
-function bootstrapServer() {
+  return emitter
+    .fn('scripts_domain', 'static.parastorage.com')
+    .fn('static_url', 'com.wixpress.test-fullstack', staticsUrl)
+    .emit();
+};
+
+module.exports.bootstrapServer = ({ port, managementPort, appConfDir }) => {
   return testkit.app('./index', {
     env: {
-      PORT: 3100,
-      MANAGEMENT_PORT: 3104,
+      PORT: port,
+      MANAGEMENT_PORT: managementPort,
       NEW_RELIC_LOG_LEVEL: 'warn',
+      APP_CONF_DIR: appConfDir,
       DEBUG: '',
     },
   });
-}
+};
 ",
-  "test/it/server.spec.js": "import { expect } from 'chai';
-import axios from 'axios';
-import adapter from 'axios/lib/adapters/http';
-import { beforeAndAfter, app } from '../environment';
-import { baseURL } from '../test-common';
-import { wixAxiosInstanceConfig } from 'wix-axios-config';
-
-const axiosInstance = wixAxiosInstanceConfig(axios, { baseURL, adapter });
+  "test/server/server.spec.js": "import axios from 'axios';
 
 describe('When rendering', () => {
-  beforeAndAfter();
-
   it('should display a title', async () => {
-    const url = app.getUrl('/');
-    const response = await axiosInstance.get(url);
+    const url = global.app.getUrl('/');
+    const response = await axios.get(url);
 
-    expect(response.data).to.contain('Wix Full Stack Project Boilerplate');
+    expect(response.data).toContain('Wix Full Stack Project Boilerplate');
   });
 });
-",
-  "test/mocha-setup.js": "import axios from 'axios';
-import { wixAxiosConfig } from 'wix-axios-config';
-import { baseURL } from './test-common';
-
-wixAxiosConfig(axios, { baseURL });
-",
-  "test/test-common.js": "export const baseURL = \`http://localhost:5554\`;
 ",
   "wallaby.js": "module.exports = require('yoshi/config/wallaby-mocha');
 ",
