@@ -3,8 +3,6 @@ const project = require('yoshi/config/project');
 const { getPort, appConfDir } = require('./constants');
 const { loadConfig } = require('yoshi/src/utils');
 
-require('yoshi/src/require-hooks');
-
 const config = loadConfig();
 
 module.exports = class BootstrapEnvironment extends NodeEnvironment {
