@@ -2635,15 +2635,19 @@ MAINTAINER rany <rany@wix.com>
 ",
   "README.md": "# test-fullstack
 ",
-  "index.js": "const path = require('path');
-const bootstrap = require('wix-bootstrap-ng');
+  "index.js": "const bootstrap = require('wix-bootstrap-ng');
 
-const rootDir = process.env.SRC_PATH || './dist/src';
-const getPath = filename => path.join(rootDir, filename);
+const app = bootstrap();
 
-bootstrap()
-  .express(getPath('server'))
-  .start({ disableCluster: process.env.NODE_ENV === 'development' });
+if (process.env.NODE_ENV === 'production') {
+  app.express('./dist/src/server.js');
+} else {
+  app.express('./src/server.js');
+}
+
+app.start({
+  disableCluster: process.env.NODE_ENV !== 'production',
+});
 ",
   "jest-yoshi.config.js": "const { emitConfigs, bootstrapServer } = require('./test/environment');
 
@@ -2969,8 +2973,7 @@ module.exports = (app, context) => {
   }
 
   return app;
-};
-",
+};",
   "templates/test-fullstack.json.erb": "{
   \\"clientTopology\\": {
     \\"staticsDomain\\": \\"<%= scripts_domain %>\\",
@@ -2990,7 +2993,7 @@ module.exports = (app, context) => {
   "test/e2e/app.spec.js": "describe('React application', () => {
   it('should display title', async () => {
     await global.page.goto(global.app.getUrl('/'));
-    await global.page.waitForSelector('h2', { timeout: 1000 });
+    await global.page.waitForSelector('h2');
 
     expect(await global.page.$eval('h2', e => e.innerText)).toEqual('Hello World!');
   });
