@@ -1145,7 +1145,9 @@ package-lock.json
   "README.md": "# test-client
 ",
   "index.js": "require('babel-register');
-require('./test/dev/server').default();
+const { start } = require('./test/dev/server');
+
+start();
 ",
   "jest-yoshi.config.js": "module.exports = {
   server: {
@@ -1421,7 +1423,7 @@ export default function i18n({ locale, baseUrl = '' }) {
 import session from 'express-session';
 import { renderVM } from './vm';
 
-export default function start() {
+export function start() {
   const app = express();
 
   app.use(

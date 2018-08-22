@@ -2,7 +2,7 @@ import express from 'express';
 import session from 'express-session';
 import { renderVM } from './vm';
 
-export default function start() {
+export function start() {
   const app = express();
 
   app.use(
